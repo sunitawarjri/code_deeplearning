@@ -9,27 +9,17 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from nltk.corpus.reader.plaintext import PlaintextCorpusReader
 from nltk.corpus.reader.tagged import TaggedCorpusReader 
-path = 'CRF_WRONG_DATA'
+path = '_DATA'
 corpus1 = TaggedCorpusReader(path, '.*')
 print(corpus1.fileids())
 data = corpus1.tagged_sents()
-
-all_tags = ['XX','PPN','IM','CMN', 'MTN', 'ABN', 'RFP', 'EM', 'RLP',
-   'INP', 'DMP', 'IDP','POP', 'CAV', 'TRV', 'ITV', 'DTV', 'ADJ', 'CMA',
-  'SPA', 'AD', 'ADT', 'ADM', 'ADP', 'ADF', 'ADD', 'IN',
- '1PSG', '1PPG', '2PG', '2PF', '2PM', '3PSF', '3PSM', '3PPG', 
- '3PSG', 'VPT', 'VPP', 'VST','VSP', 'VFT', 'MOD', 'NEG', 'CLF', 
-'.', 'COC', 'SUC', 'CRC', 'CN', 'ON', 'QNT', 'CO', 'PAV', 'COM', 'FR', 'SYM','CLN']
 data = []
-
 n_tags = 53
-
 for i in corpus1.fileids():
     #send_tag = corpus1.raw(i)
     send_tag = corpus1.tagged_sents(i)
     #tagged = send_tag.split()
-    #tagged = send_tag.split('-/+(?=[^()]*(?:\(|')
-    
+    ######
     #for j in tagged:
     #    a = nltk.tag.str2tuple(j)
      #   data.append(a)
@@ -40,20 +30,15 @@ path1 = 'TRy_train_test'
 corpus2 = TaggedCorpusReader(path1, '.*')
 print(corpus2.fileids())
 test_data = corpus2.tagged_sents()
-
-
 #train_data, test_data = train_test_split(data,test_size=0.20)
 print(len(train_data))
 print(len(test_data))
-
 from collections import Counter, defaultdict
-
 word_counts = Counter()
 # we will use the top 11000 words for out dictionary only.
 for sentence in train_data:
     words, tags = zip(*sentence)
     word_counts.update(words)
-
 # take out the top words
 top_words = list(zip(*word_counts.most_common(11000)))[0]
 # add two other tags: <EOS>:End of Sentence, <UNK>:Unknown 
@@ -66,8 +51,15 @@ word_to_idx = defaultdict(lambda:1, {words:idx for idx,words in tqdm(enumerate(v
 # create reverse mapping
 idx_to_word = {idx:words for words,idx in word_to_idx.items()}
 
+List_t = ['XX','PPN','IM','CMN', 'MTN', 'ABN', 'RFP', 'EM', 'RLP',
+   'INP', 'DMP', 'IDP','POP', 'CAV', 'TRV', 'ITV', 'DTV', 'ADJ', 'CMA',
+  'SPA', 'AD', 'ADT', 'ADM', 'ADP', 'ADF', 'ADD', 'IN',
+ '1PSG', '1PPG', '2PG', '2PF', '2PM', '3PSF', '3PSM', '3PPG', 
+ '3PSG', 'VPT', 'VPP', 'VST','VSP', 'VFT', 'MOD', 'NEG', 'CLF', 
+'.', 'COC', 'SUC', 'CRC', 'CN', 'ON', 'QNT', 'CO', 'PAV', 'COM', 'FR', 'SYM','CLN']
+
 # create word to index mapping
-tag_to_idx = {tag:idx for idx,tag in tqdm(enumerate(all_tags))}
+tag_to_idx = {tag:idx for idx,tag in tqdm(enumerate(List_t))}
 # create reverse mapping
 idx_to_tag = {idx:tags for tags,idx in tag_to_idx.items()}
 
@@ -127,7 +119,7 @@ def generate_model_batches(sentences, batch_size=16, pad=0):
             batch_tags_num = convert_to_num(batch_tags, tag_to_idx, pad=0)
             
             # output labels 
-            batch_tags_ohe = to_categorical(batch_tags_num, len(all_tags))
+            batch_tags_ohe = to_categorical(batch_tags_num, len(List_t))
             yield batch_words_num, batch_tags_ohe
             
         # for computing accuracy
@@ -159,7 +151,7 @@ model.add(L.Bidirectional(L.LSTM(64,return_sequences=True,activation='tanh')))
 model.add(L.Dropout(0.35))
 model.add(L.BatchNormalization())
 
-stepwise_dense = L.TimeDistributed(L.Dense(len(all_tags),activation='softmax'))
+stepwise_dense = L.TimeDistributed(L.Dense(len(List_t),activation='softmax'))
 model.add(stepwise_dense)
 
 
